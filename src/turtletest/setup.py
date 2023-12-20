@@ -1,4 +1,6 @@
+import os
 from setuptools import find_packages, setup
+from setuptools.glob import glob
 
 package_name = 'turtletest'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'turtletest_node = turtletest.turtletest_node:main'
+            'turtletest_node = turtletest.turtletest_node:main',
+            'turtletest_controller = turtletest.kb_controller:main'
         ],
     },
 )

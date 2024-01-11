@@ -20,16 +20,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(
-                    get_package_share_directory('turtlebot3_navigation2'),
-                    'launch/navigation2.launch.py')),
-            launch_arguments={
-                'use_sim_time': 'True',
-                'map': map_path,
-            }.items()
-        ),
-        IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join( mapping_path, 'launch/world.launch.py'))
         ),
         Node(
@@ -40,8 +30,13 @@ def generate_launch_description():
         ),
         Node(
             package='mapping',
-            executable='navigation_node',
-            name='navigation_node',
+            executable='nearby_node',
+            name='nearby_node',
             prefix='xterm -e',
+        ),
+        Node(
+            package='plotjuggler',
+            executable='plotjuggler',
+            name='plotjuggler_node'
         ),
     ])

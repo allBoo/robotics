@@ -26,7 +26,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mapping_node = mapping.mapping_node:main',
+            'navigation_node = mapping.navigation_node:main',
+            'nearby_node = mapping.nearby_node:main',
             'mapping_controller = mapping.kb_controller:main'
         ],
     },

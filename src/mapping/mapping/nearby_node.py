@@ -57,6 +57,7 @@ class NearbyNode(Node):
                                                   callback_group=cb)
 
         self.cmd_vel_t = self.create_publisher(Twist, CMD_VEL_TOPIC, 10, callback_group=cb)
+
         self.angle_t = self.create_publisher(Float64, ANGLE_TOPIC, 10, callback_group=cb)
         self.distance_t = self.create_publisher(Float64, DISTANCE_TOPIC, 10, callback_group=cb)
 
@@ -95,10 +96,6 @@ class NearbyNode(Node):
 
     def laser_callback(self, msg):
         try:
-            # self.head_t.publish(Float64(data=head))
-            # self.left_t.publish(Float64(data=left))
-            # self.right_t.publish(Float64(data=right))
-
             self.nearby(msg.ranges)
         except Exception as e:
             print(e)

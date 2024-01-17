@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
-from cv_bridge import CvBridge, CvBridgeError
 import math
+import queue
 
 from rclpy.impl.rcutils_logger import RcutilsLogger
 
@@ -10,35 +10,24 @@ class AutoRacer:
 
     def __init__(self, logger: RcutilsLogger):
         self.logger = logger
-        self.bridge = CvBridge()
+        self.queue_size = 8
+        self.compensations = queue.Queue(maxsize=self.queue_size)
 
-    def get_compensation(self, ros_image):
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(ros_image, "bgr8")
-        except CvBridgeError as e:
-            print(e)
-            return None
+    def get_compensation(self, cv_image):
+        border_yellow, border_white = self.detect_lines(cv_image)
 
-        scale_percent = 30  # percent of original size
-        width = int(cv_image.shape[1] * scale_percent / 100)
-        height = int(cv_image.shape[0] * scale_percent / 100)
-        dim = (width, height)
-        # resize image
-        resized = cv2.resize(cv_image, dim, interpolation=cv2.INTER_AREA)
-        border_yellow, border_white = self.detect_lines(resized)
-
-        cv2.line(resized, (border_yellow, 0), (border_yellow, resized.shape[0]), (255, 0, 0), 3)
-        cv2.line(resized, (border_white, 0), (border_white, resized.shape[0]), (0, 255, 0), 3)
+        cv2.line(cv_image, (border_yellow, 0), (border_yellow, cv_image.shape[0]), (255, 0, 0), 3)
+        cv2.line(cv_image, (border_white, 0), (border_white, cv_image.shape[0]), (0, 255, 0), 3)
 
         target_top = int(border_yellow + (border_white - border_yellow) / 2)
-        target_bottom = int(resized.shape[1] / 2)
+        target_bottom = int(cv_image.shape[1] / 2)
 
-        cv2.line(resized, (target_bottom, resized.shape[0]), (target_top, 0), [0, 0, 255], 3)
+        cv2.line(cv_image, (target_bottom, cv_image.shape[0]), (target_top, 0), [0, 0, 255], 3)
 
-        cv2.imshow("Image window", resized)
+        cv2.imshow("Image window", cv_image)
         cv2.waitKey(3)
 
-        tg = resized.shape[0] / (target_bottom - target_top) if target_bottom - target_top != 0 else 0
+        tg = cv_image.shape[0] / (target_bottom - target_top) if target_bottom - target_top != 0 else 0
         angle = math.atan(tg) if tg else math.pi/2
 
         compensation = (math.pi/2) - abs(angle)
@@ -49,6 +38,12 @@ class AutoRacer:
         # self.logger.info(f'tg = {tg}, angle_r = {angle_r}, angle = {angle}, compensation_r={compensation_r}, compensation={compensation}')
 
         return compensation
+
+        self.compensations.put(compensation)
+        if self.compensations.full():
+            return self.compensations.get()
+        else:
+            return None
 
     def detect_lines(self, image):
         region_interest = image[int(image.shape[0] * 3 / 4):,:,:]

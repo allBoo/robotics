@@ -12,16 +12,16 @@ def generate_launch_description():
 
     package_path = get_package_share_directory('autorace')
 
-    clean_world = os.path.join(
-        package_path,
-        'worlds',
-        'autorace-clean.world.xml'
-    )
+    # clean_world = os.path.join(
+    #     package_path,
+    #     'worlds',
+    #     'autorace-clean.world.xml'
+    # )
 
     return LaunchDescription([
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(package_path, 'launch/world.launch.py')),
-            launch_arguments={'world': clean_world}.items()
+            # launch_arguments={'world': clean_world}.items()
         ),
         # IncludeLaunchDescription(
         #     PythonLaunchDescriptionSource(

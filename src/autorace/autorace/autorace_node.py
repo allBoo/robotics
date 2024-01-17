@@ -10,10 +10,11 @@ from . import (
 )
 
 from .autorace import AutoRacer
+from .tracker import ObjectTracker
+from .utils import scale_image
 
 import rclpy
 from rclpy.node import Node
-from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 
 from geometry_msgs.msg import Twist
@@ -21,11 +22,12 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
 import cv2
+from cv_bridge import CvBridge, CvBridgeError
 
 
 class AutoRaceNode(Node):
 
-    FORWARD_SPEED = 0.1
+    FORWARD_SPEED = 0.2
 
     SOURCE_IMAGE = 'Source Image'
 
@@ -42,7 +44,9 @@ class AutoRaceNode(Node):
 
         self.cmd_vel_t = self.create_publisher(Twist, CMD_VEL_TOPIC, 10, callback_group=cb)
 
+        self.bridge = CvBridge()
         self.racer = AutoRacer(self.get_logger())
+        self.tracker = ObjectTracker(self.get_logger())
 
     def listener_callback(self, msg: String):
         if msg.data == STATE_FOLLOW:
@@ -53,11 +57,24 @@ class AutoRaceNode(Node):
             self.stop()
             self.state = STATE_IDLE
 
-    def camera_callback(self, data):
+    def camera_callback(self, ros_image):
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(ros_image, "bgr8")
+        except CvBridgeError as e:
+            self.get_logger().error(str(e))
+            return None
+
+        cv_image = scale_image(cv_image, 30)
+
+        try:
+            self.tracker.track(cv_image)
+        except Exception as e:
+            self.get_logger().error(str(e))
+
         if self.state != STATE_FOLLOW:
             return
 
-        compensation = self.racer.get_compensation(data)
+        compensation = self.racer.get_compensation(cv_image)
         if compensation is None:
             return
 
@@ -80,9 +97,6 @@ def main(args=None):
 
     subscriber = AutoRaceNode()
 
-    # executor = MultiThreadedExecutor()
-    # executor.add_node(subscriber)
-
     try:
         subscriber.get_logger().info('Beginning Autorace, shut down with CTRL-C')
         rclpy.spin(subscriber)
@@ -98,4 +112,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-

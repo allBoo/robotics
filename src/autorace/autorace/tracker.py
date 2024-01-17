@@ -56,11 +56,13 @@ class ObjectTracker:
                     continue
 
                 (xc, yc, rc, *_) = circle_candidate
+                approved = False
                 for (x, y, r, *_) in filtered_circles:
                     dist = abs(math.dist((xc, yc), (x, y)))
-                    if dist > r:
-                        filtered_circles.append(circle_candidate)
-                        continue
+                    approved = dist > r+rc
+
+                if approved:
+                    filtered_circles.append(circle_candidate)
 
             found = len(filtered_circles)
             if self.found != found:

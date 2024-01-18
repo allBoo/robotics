@@ -148,7 +148,7 @@ class MoveCloseTarget(TargetMachine):
 
 class TurnTarget(TargetMachine):
 
-    def __init__(self, target_angle: float, threshold: float = 1.0):
+    def __init__(self, target_angle: float, threshold: float = 3.0):
         super().__init__(0.0, target_angle)
         self.threshold = math.radians(threshold)
 
